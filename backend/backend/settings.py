@@ -10,8 +10,6 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['onov.zapto.org', '84.252.140.138', '127.0.0.1', 'localhost']
 
-
-
 # Application definition
 
 INSTALLED_APPS = [
