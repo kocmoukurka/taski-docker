@@ -8,17 +8,6 @@ on:
       - main
 
 jobs:
-  check_secrets:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check Docker Hub secrets
-        run: |
-          echo "DOCKER_HUB_USERNAME exists: ${{ !secrets.DOCKER_HUB_USERNAME == '' }}"
-          echo "DOCKER_HUB_TOKEN exists: ${{ !secrets.DOCKER_HUB_TOKEN == '' }}"
-          # Временный обходной путь для тестирования
-          if [ -z "$DOCKER_HUB_USERNAME" ] || [ -z "$DOCKER_HUB_TOKEN" ]; then
-            echo "::warning::Running in test mode without real credentials"
-          fi
 
   tests:
     runs-on: ubuntu-latest
