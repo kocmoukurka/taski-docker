@@ -1,11 +1,25 @@
 name: Main Taski workflow
 
+
+
 on:
   push:
     branches:
       - main
 
 jobs:
+  check_secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify Docker Hub secrets
+        run: |
+          if [ -z "${{ secrets.DOCKER_HUB_USERNAME }}" ] || [ -z "${{ secrets.DOCKER_HUB_TOKEN }}" ]; then
+            echo "::error::Docker Hub credentials not found in secrets!"
+            exit 1
+          else
+            echo "Docker Hub secrets are configured"
+          fi
+
   tests:
     runs-on: ubuntu-latest
     services:
