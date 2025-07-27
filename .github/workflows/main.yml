@@ -41,11 +41,31 @@ jobs:
           cd backend/
           python manage.py test
 
-  build_and_push_to_docker_hub:
+  frontend_tests:
     runs-on: ubuntu-latest
-    needs: tests
     steps:
       - uses: actions/checkout@v3
+      - name: Set up nodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: |
+          cd frontend/
+          npm ci
+      - name: Test frontend
+        run: |
+          cd frontend/
+          npm run test
+
+  build_and_push_to_docker_hub:
+    name: Push backend Docker image
+    runs-on: ubuntu-latest
+    needs: [tests]  # Зависит только от backend тестов
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
@@ -59,10 +79,13 @@ jobs:
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/taski_backend:latest
 
   build_frontend_and_push_to_docker_hub:
+    name: Push frontend Docker image
     runs-on: ubuntu-latest
-    needs: tests
+    needs: [frontend_tests]  # Зависит только от frontend тестов
     steps:
       - uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
@@ -76,10 +99,13 @@ jobs:
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/taski_frontend:latest
 
   build_gateway_and_push_to_docker_hub:
+    name: Push gateway Docker image
     runs-on: ubuntu-latest
-    needs: tests
+    needs: [tests]  # Зависит от backend тестов
     steps:
       - uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
@@ -124,3 +150,14 @@ jobs:
             sudo docker compose -f docker-compose.production.yml up -d
             sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
             sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --noinput
+
+  send_message:
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Send message
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: Деплой успешно выполнен!
